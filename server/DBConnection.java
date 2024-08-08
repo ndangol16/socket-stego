@@ -85,34 +85,46 @@ public class DBConnection {
 
     }
 
-    public void updateFriendRequest(int requestId, String status) throws SQLException {
-        String query = "UPDATE friend_requests SET status = ? WHERE id = ?";
+    public void updateFriendRequest(int requestId, String status) throws SQLException{
+        String query = "UPDATE friend_requests SET status = ? WHERE sender_id = ?";
+        System.out.println("updateFriendRequest id:" + requestId);
+        System.out.println("updateFriendRequest status:" + status);
+
         try (PreparedStatement pst = con.prepareStatement(query)) {
             pst.setString(1, status);
             pst.setInt(2, requestId);
             pst.executeUpdate();
+        }catch (SQLException e){
+            e.printStackTrace();
         }
     }
 
     public int getSenderIdByRequestId(int requestId) throws SQLException {
-        String query = "SELECT sender_id FROM friend_requests WHERE id = ?";
+        String query = "SELECT receiver_id FROM friend_requests WHERE sender_id = ?";
+        System.out.println("getSenderIdByRequestId requestId: "+ requestId);
         try (PreparedStatement pst = con.prepareStatement(query)) {
             pst.setInt(1, requestId);
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
                 return rs.getInt("sender_id");
             }
+        }catch (SQLException e){
+            e.printStackTrace();
+
         }
         return -1;
     }
 
     public void addFriend(int user1Id, int user2Id) throws SQLException {
-        String query = "INSERT INTO friends (user1_id, user2_id) VALUES (?, ?), (?, ?)";
+//        String query = "INSERT INTO friends (user1_id, user2_id) VALUES (?, ?), (?, ?)";
+        System.out.println("addFriend user1Id: "+user1Id);
+        System.out.println("addFriend user2Id: "+user2Id);
+        String query = "INSERT INTO friends (user1_id, user2_id) VALUES (?, ?)";
         try (PreparedStatement pst = con.prepareStatement(query)) {
             pst.setInt(1, user1Id);
             pst.setInt(2, user2Id);
-            pst.setInt(3, user2Id);
-            pst.setInt(4, user1Id);
+//            pst.setInt(3, user2Id);
+//            pst.setInt(4, user1Id);
             pst.executeUpdate();
         }
     }

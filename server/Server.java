@@ -191,14 +191,19 @@ public class Server {
                     String status = (String) statusObject;
                     db.updateFriendRequest(requestId, status);
                     if ("ACCEPTED".equals(status)) {
-                        int senderId = db.getSenderIdByRequestId(requestId);
-                        db.addFriend(userId, senderId);
+//                        int senderId = db.getSenderIdByRequestId(requestId);
+                        db.addFriend(userId, requestId);
                     }
+
                     out.writeObject("SUCCESS");
+
                 } else {
                     out.writeObject("INVALID_REQUEST_DATA");
                 }
             } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            catch (SQLException e){
                 e.printStackTrace();
             }
         }

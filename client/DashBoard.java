@@ -201,6 +201,8 @@ public class DashBoard extends JFrame {
                 Object response = in.readObject();
                 if (!"SUCCESS".equals(response)) {
                     JOptionPane.showMessageDialog(this, "Error updating friend request.");
+                }else{
+                    loadFriends();
                 }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
