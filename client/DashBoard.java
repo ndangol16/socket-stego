@@ -1,5 +1,5 @@
 package client;
-
+import steganography.StegoPanel;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -21,21 +21,25 @@ public class DashBoard extends JFrame {
     private ObjectInputStream in;
     private JList<String> friendList;
     private DefaultListModel<String> friendListModel;
-    private JPanel imagePanel;
+    private JPanel imagePanelArea,imagePanel;
     private JTextArea dragDropArea;
     private JDialog requestDialog;
     private int userId;
+    private StegoPanel spnl;
+
 
     public DashBoard(int userId, String username) {
         this.userId = userId;
 
         setTitle("Dashboard");
-        setSize(600, 500);
+        setSize(800, 700);
         setLayout(new BorderLayout());
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         lbl_name = new JLabel("Welcome " + username, SwingConstants.CENTER);
         add(lbl_name, BorderLayout.NORTH);
+
+        spnl = new StegoPanel();
 
         // Menu bar with logout option
         JMenuBar menuBar = new JMenuBar();
@@ -66,8 +70,11 @@ public class DashBoard extends JFrame {
         leftPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(leftPanel, BorderLayout.WEST);
 
+        imagePanelArea = new JPanel(new GridLayout(2,1));
+
+
         imagePanel = new JPanel(new BorderLayout());
-        imagePanel.setBorder(BorderFactory.createTitledBorder("Drag and Drop Image"));
+        imagePanel.setBorder(BorderFactory.createTitledBorder("Send Image"));
         dragDropArea = new JTextArea("Drag and drop image here");
         dragDropArea.setDropTarget(new DropTarget() {
             @Override
@@ -88,10 +95,15 @@ public class DashBoard extends JFrame {
                 }
             }
         });
-        dragDropArea.setPreferredSize(new Dimension(300, 300));
+        spnl.setBorder(BorderFactory.createTitledBorder("Steganography"));
+        dragDropArea.setPreferredSize(new Dimension(300, 150));
         dragDropArea.setEditable(false);
         imagePanel.add(dragDropArea, BorderLayout.CENTER);
-        add(imagePanel, BorderLayout.CENTER);
+
+        add(imagePanelArea,BorderLayout.CENTER);
+        imagePanelArea.add(imagePanel);
+        imagePanelArea.add(spnl);
+
 
         try {
             socket = new Socket("localhost", 12345);

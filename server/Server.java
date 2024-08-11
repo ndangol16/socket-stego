@@ -196,7 +196,6 @@ public class Server {
                     }
 
                     out.writeObject("SUCCESS");
-
                 } else {
                     out.writeObject("INVALID_REQUEST_DATA");
                 }
