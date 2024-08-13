@@ -49,7 +49,8 @@ public class Server {
                         handleLogin();
                     } else if ("REGISTER".equals(initialAction)) {
                         handleRegister();
-                    } else {
+                    }
+                    else {
                         out.writeObject("INVALID_ACTION");
                         return;
                     }
@@ -122,14 +123,20 @@ public class Server {
             String username = (String) in.readObject();
             String password = (String) in.readObject();
             System.out.println("Received registration credentials: username = " + username);
-            boolean success = db.registerUser(username, password);
-            if (success) {
-                System.out.println("User registered successfully: username = " + username);
-                out.writeObject("SUCCESS");
-            } else {
-                System.out.println("Registration failed, user already exists: username = " + username);
-                out.writeObject("USER_EXISTS");
+
+            if (handleCheckUsername(username)){
+                boolean success = db.registerUser(username, password);
+                if (success) {
+                    System.out.println("User registered successfully: username = " + username);
+                    out.writeObject("SUCCESS");
+                } else {
+                    System.out.println("Registration failed, user already exists: username = " + username);
+                    out.writeObject("USER_EXISTS");
+                }
+            }else{
+                out.writeObject("USERNAME_NOT_UNIQUE");
             }
+
         }
 
         private void handleSendFriendRequest() throws IOException, SQLException {
@@ -179,6 +186,14 @@ public class Server {
                 e.printStackTrace();
             }
 
+        }
+        private boolean handleCheckUsername(String username) throws SQLException {
+            boolean isUnique = !db.checkUsernameExists(username);
+            if (isUnique) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         private void handleUpdateFriendRequest() throws IOException, SQLException {

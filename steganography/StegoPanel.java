@@ -3,7 +3,9 @@ package steganography;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
@@ -13,12 +15,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 public class StegoPanel extends JPanel {
     private BufferedImage image;
     private JTextArea textArea;
     private JLabel imageLabel;
-    private static final String IMAGE_ID = "testImageId"; // Static image ID for example purposes
     private DBConnection dbConnection; // DBConnection instance
 
     public StegoPanel() {
@@ -87,33 +89,120 @@ public class StegoPanel extends JPanel {
     private class EmbedButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             if (image != null && !textArea.getText().isEmpty()) {
+                String uniqueImageId = generateUniqueImageId(); // Generate unique image ID
                 int[] prSequence = generatePseudoRandomSequence(image.getWidth() * image.getHeight() * 3);
                 embedData(image, textArea.getText(), prSequence);
-                dbConnection.saveSequence(IMAGE_ID, prSequence);
+                dbConnection.saveSequence(uniqueImageId, prSequence); // Store sequence with unique ID
 
                 try {
-                    ImageIO.write(image, "png", new File("stego_image.png"));
-                    JOptionPane.showMessageDialog(null, "Data embedded successfully!");
+                    // Save the stego image with the unique image ID
+                    ImageIO.write(image, "png", new File(uniqueImageId + "_stego_image.png"));
+
+                    // Create a JTextArea with the Image ID that is selectable
+                    JTextArea textArea = new JTextArea("Data embedded successfully!\nImage ID: " + uniqueImageId);
+                    textArea.setEditable(false); // Not editable
+                    textArea.setLineWrap(true);  // Enable line wrap
+                    textArea.setWrapStyleWord(true);
+                    textArea.setOpaque(false); // Makes it look like a JLabel
+                    textArea.setFont(UIManager.getFont("Label.font")); // Use the default label font
+                    textArea.setPreferredSize(new Dimension(300, 100)); // Increase width and height
+
+                    // Add the "Copy to Clipboard" button
+                    JButton copyButton = new JButton("Copy Image ID");
+                    copyButton.addActionListener(new ActionListener() {
+                        public void actionPerformed(ActionEvent evt) {
+                            StringSelection selection = new StringSelection(uniqueImageId);
+                            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                            clipboard.setContents(selection, selection);
+                        }
+                    });
+
+                    // Create a panel to hold both the text area and the button
+                    JPanel panel = new JPanel(new BorderLayout());
+                    panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
+                    panel.add(copyButton, BorderLayout.SOUTH);
+
+                    // Show the panel in a JOptionPane
+                    JOptionPane.showMessageDialog(null,
+                            panel,
+                            "Embedding Complete",
+                            JOptionPane.INFORMATION_MESSAGE);
+
                 } catch (IOException ex) {
                     ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null,
+                            "Error saving the image.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                JOptionPane.showMessageDialog(null, "Please drop an image and text first.");
+                JOptionPane.showMessageDialog(null,
+                        "Please drop an image and text first.",
+                        "Input Required",
+                        JOptionPane.WARNING_MESSAGE);
             }
         }
     }
+
+
+
+
 
     private class ExtractButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             if (image != null) {
-                int[] prSequence = dbConnection.getSequence(IMAGE_ID);
-                String extractedText = extractData(image, prSequence);
-                JOptionPane.showMessageDialog(null, "Extracted Data: " + extractedText);
+                String imageId = JOptionPane.showInputDialog(null,
+                        "Please enter the Image ID:",
+                        "Enter Image ID",
+                        JOptionPane.QUESTION_MESSAGE);
+
+                if (imageId != null && !imageId.trim().isEmpty()) {
+                    int[] prSequence = dbConnection.getSequence(imageId);
+
+                    if (prSequence != null) {
+                        String extractedText = extractData(image, prSequence);
+
+                        if (extractedText != null && !extractedText.isEmpty()) {
+                            JTextArea textArea = new JTextArea("Extracted Text:\n" + extractedText);
+                            textArea.setEditable(false);
+                            textArea.setLineWrap(true);
+                            textArea.setWrapStyleWord(true);
+                            textArea.setFont(UIManager.getFont("Label.font"));
+
+                            // Set preferred size for the text area
+                            textArea.setPreferredSize(new Dimension(300, 100)); // Increase width and height
+
+                            JOptionPane.showMessageDialog(null,
+                                    new JScrollPane(textArea),
+                                    "Data Extraction Complete",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        } else {
+                            JOptionPane.showMessageDialog(null,
+                                    "No data found in the image for the provided Image ID.",
+                                    "No Data Found",
+                                    JOptionPane.WARNING_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null,
+                                "No pseudo-random sequence found for the provided Image ID.",
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null,
+                            "Image ID is required for data extraction.",
+                            "Input Required",
+                            JOptionPane.WARNING_MESSAGE);
+                }
             } else {
-                JOptionPane.showMessageDialog(null, "Please drop an image first.");
+                JOptionPane.showMessageDialog(null,
+                        "Please drop an image first.",
+                        "Input Required",
+                        JOptionPane.WARNING_MESSAGE);
             }
         }
     }
+
 
     private void embedData(BufferedImage image, String data, int[] prSequence) {
         String dataBin = toBinary(data);
@@ -141,7 +230,7 @@ public class StegoPanel extends JPanel {
     }
 
     private String extractData(BufferedImage image, int[] prSequence) {
-        int dataLen = 100; // Assuming we know the length of the hidden data
+        int dataLen = 100; // Assuming length of the hidden data
         int redundancy = 3;
         int[] bitCounts = new int[dataLen * 8];
 
@@ -201,4 +290,9 @@ public class StegoPanel extends JPanel {
         }
         return sequence;
     }
+
+    private String generateUniqueImageId() {
+        return UUID.randomUUID().toString();
+    }
 }
+

@@ -179,7 +179,9 @@ public class DashBoard extends JFrame {
                 List<String> requests = (List<String>) response;
                 StringBuilder sb = new StringBuilder("Pending Friend Requests:\n");
                 for (String request : requests) {
-                    sb.append(request).append("\n");
+                    String[] parts = request.split(" - ");
+                    String senderUsername = parts[1];
+                    sb.append(senderUsername).append("\n");
                 }
                 JOptionPane.showMessageDialog(this, sb.toString());
                 if (!requests.isEmpty()) {

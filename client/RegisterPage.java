@@ -74,8 +74,10 @@ public class RegisterPage extends JFrame implements ActionListener {
                         JOptionPane.showMessageDialog(this, "Registration Successful", "Successful", JOptionPane.INFORMATION_MESSAGE);
                         new LoginPage();
                         dispose();
+                    } else if ("USERNAME_NOT_UNIQUE".equals(response)) {
+                        JOptionPane.showMessageDialog(this, "Username is already taken", "Unsuccessful", JOptionPane.INFORMATION_MESSAGE);
                     } else {
-                        JOptionPane.showMessageDialog(this, "Username already exists", "Unsuccessful", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "User already exists", "Unsuccessful", JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (IOException | ClassNotFoundException ex) {
                     ex.printStackTrace();

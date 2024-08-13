@@ -128,6 +128,19 @@ public class DBConnection {
             pst.executeUpdate();
         }
     }
+    // Check if the username exists in the database
+    public boolean checkUsernameExists(String username) throws SQLException {
+        String query = "SELECT COUNT(*) FROM users WHERE username = ?";
+        try (PreparedStatement pst = con.prepareStatement(query)) {
+            pst.setString(1, username);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+                return false;
+            }
+        }
+    }
 
     public List<String> getFriends(int userId) throws SQLException {
         String query = "SELECT u.username FROM friends f JOIN users u ON (f.user1_id = u.id OR f.user2_id = u.id) WHERE (f.user1_id = ? OR f.user2_id = ?) AND u.id != ?";
@@ -157,6 +170,7 @@ public class DBConnection {
     }
 
     public boolean registerUser(String username, String password) throws SQLException {
+
         String checkQuery = "SELECT id FROM users WHERE username = ?";
         try (PreparedStatement checkPst = con.prepareStatement(checkQuery)) {
             checkPst.setString(1, username);
