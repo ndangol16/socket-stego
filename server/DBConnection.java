@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class DBConnection {
     private Connection con;
@@ -23,7 +24,6 @@ public class DBConnection {
             e.printStackTrace();
         }
     }
-
 
     public int getUserIdByUsername(String username) throws SQLException {
         String query = "SELECT id FROM users WHERE username = ?";
@@ -190,3 +190,5 @@ public class DBConnection {
     }
 
 }
+
+
