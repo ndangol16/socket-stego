@@ -11,11 +11,13 @@ import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.sql.*;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
-import java.util.UUID;
 
 public class StegoPanel extends JPanel {
     private BufferedImage image;
@@ -295,4 +297,87 @@ public class StegoPanel extends JPanel {
         return UUID.randomUUID().toString();
     }
 }
+class DBConnection {
+    private Connection con;
 
+    public DBConnection() {
+        try {String envFilePath = "server/.env";
+            Map<String, String> envVars = EnvLoad.loadEnv(envFilePath);
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            con = DriverManager.getConnection(envVars.get("DB_URL"), envVars.get("DB_USER"), envVars.get("DB_PASSWORD"));
+            if (con != null) {
+                System.out.println("DB CONNECTED!");
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            System.err.println("DB connection failure!");
+            e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void saveSequence(String imageId, int[] sequence) {
+        String query = "INSERT INTO PseudoRandomSequences (image_id, sequence) VALUES (?, ?)";
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setString(1, imageId);
+            stmt.setString(2, sequenceToString(sequence));
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int[] getSequence(String imageId) {
+        String query = "SELECT sequence FROM PseudoRandomSequences WHERE image_id = ?";
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setString(1, imageId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return stringToSequence(rs.getString("sequence"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new int[0]; // Return empty array if not found
+    }
+
+    private String sequenceToString(int[] sequence) {
+        StringBuilder sb = new StringBuilder();
+        for (int num : sequence) {
+            sb.append(num).append(",");
+        }
+        return sb.toString();
+    }
+
+    private int[] stringToSequence(String sequenceStr) {
+        String[] parts = sequenceStr.split(",");
+        return Arrays.stream(parts)
+                .filter(part -> !part.isEmpty())
+                .mapToInt(Integer::parseInt)
+                .toArray();
+    }
+}
+
+class EnvLoad {
+    public static Map<String, String> loadEnv(String filePath) throws IOException {
+        Map<String, String> envVars = new HashMap<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue; // Skip empty lines and comments
+                }
+                String[] parts = line.split("=", 2);
+                if (parts.length == 2) {
+                    String key = parts[0].trim();
+                    String value = parts[1].trim();
+                    envVars.put(key, value);
+                }
+            }
+        }
+
+        return envVars;
+    }
+}
