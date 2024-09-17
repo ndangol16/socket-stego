@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -260,7 +261,7 @@ class DBConnection {
     public DBConnection() {
         try {
             String envFilePath = "server/.env";
-            Map<String, String> envVars = EnvLoader.loadEnv(envFilePath);
+            Map<String, String> envVars = EnvLoad.loadEnv(envFilePath);
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(envVars.get("DB_URL"), envVars.get("DB_USER"), envVars.get("DB_PASSWORD"));
             if (con != null) {
@@ -440,5 +441,27 @@ class DBConnection {
 
 }
 
+class EnvLoad {
+    public static Map<String, String> loadEnv(String filePath) throws IOException {
+        Map<String, String> envVars = new HashMap<>();
 
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue; // Skip empty lines and comments
+                }
+                String[] parts = line.split("=", 2);
+                if (parts.length == 2) {
+                    String key = parts[0].trim();
+                    String value = parts[1].trim();
+                    envVars.put(key, value);
+                }
+            }
+        }
+
+        return envVars;
+    }
+}
 
