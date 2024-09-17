@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.Socket;
+import java.util.Map;
 
 public class LoginPage extends JFrame implements ActionListener {
     private JLabel lbl_title, lbl_username, lbl_password;
@@ -66,8 +67,10 @@ public class LoginPage extends JFrame implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Please enter all fields!", "Unsuccessful", JOptionPane.ERROR_MESSAGE);
             } else {
                 try {
+                    String envFilePath = "client/.env";
+                    Map<String, String> envVars = EnvLoader.loadEnv(envFilePath);
                     System.out.println("Connecting to server...");
-                    socket = new Socket("localhost", 12345);
+                    socket = new Socket(envVars.get("URL"), Integer.parseInt(envVars.get("PORT")));
                     out = new ObjectOutputStream(socket.getOutputStream());
                     in = new ObjectInputStream(socket.getInputStream());
 

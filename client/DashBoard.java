@@ -10,6 +10,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
 
 public class DashBoard extends JFrame {
     private JLabel lbl_name;
@@ -29,6 +30,9 @@ public class DashBoard extends JFrame {
 
 
     public DashBoard(int userId, String username) {
+
+
+
         this.userId = userId;
 
         setTitle("Dashboard");
@@ -106,7 +110,9 @@ public class DashBoard extends JFrame {
 
 
         try {
-            socket = new Socket("localhost", 12345);
+            String envFilePath = "client/.env";
+            Map<String, String> envVars = EnvLoader.loadEnv(envFilePath);
+            socket = new Socket(envVars.get("URL"), Integer.parseInt(envVars.get("PORT")));
             out = new ObjectOutputStream(socket.getOutputStream());
             out.flush();
             in = new ObjectInputStream(socket.getInputStream());
