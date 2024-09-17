@@ -1,11 +1,14 @@
 package server;
 
+import client.EnvLoader;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Server {
     private static final int PORT = 12345;
@@ -253,20 +256,21 @@ public class Server {
 
 class DBConnection {
     private Connection con;
-    private String url = "jdbc:mysql://localhost:3306/project_two";
-    private String username = "root";
-    private String pass = "";
 
     public DBConnection() {
         try {
+            String envFilePath = "server/.env";
+            Map<String, String> envVars = EnvLoader.loadEnv(envFilePath);
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection(url, username, pass);
+            con = DriverManager.getConnection(envVars.get("DB_URL"), envVars.get("DB_USER"), envVars.get("DB_PASSWORD"));
             if (con != null) {
                 System.out.println("DB CONNECTED!");
             }
         } catch (ClassNotFoundException | SQLException e) {
             System.err.println("DB connection failure!");
             e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
