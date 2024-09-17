@@ -1,7 +1,5 @@
 package server;
 
-import client.EnvLoader;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
