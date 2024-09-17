@@ -1,4 +1,5 @@
 package client;
+
 import steganography.StegoPanel;
 import javax.swing.*;
 import java.awt.*;
@@ -6,6 +7,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -22,17 +25,16 @@ public class DashBoard extends JFrame {
     private ObjectInputStream in;
     private JList<String> friendList;
     private DefaultListModel<String> friendListModel;
-    private JPanel imagePanelArea,imagePanel;
+    private JPanel imagePanelArea, imagePanel;
     private JTextArea dragDropArea;
+    private JLabel imagePreview;
+    private JButton btn_sendImage;
     private JDialog requestDialog;
     private int userId;
     private StegoPanel spnl;
-
+    private byte[] droppedImageBytes; // Store the dropped image bytes
 
     public DashBoard(int userId, String username) {
-
-
-
         this.userId = userId;
 
         setTitle("Dashboard");
@@ -74,8 +76,7 @@ public class DashBoard extends JFrame {
         leftPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(leftPanel, BorderLayout.WEST);
 
-        imagePanelArea = new JPanel(new GridLayout(2,1));
-
+        imagePanelArea = new JPanel(new GridLayout(2, 1));
 
         imagePanel = new JPanel(new BorderLayout());
         imagePanel.setBorder(BorderFactory.createTitledBorder("Send Image"));
@@ -104,10 +105,23 @@ public class DashBoard extends JFrame {
         dragDropArea.setEditable(false);
         imagePanel.add(dragDropArea, BorderLayout.CENTER);
 
-        add(imagePanelArea,BorderLayout.CENTER);
+        imagePreview = new JLabel("No image selected", SwingConstants.CENTER);
+        imagePreview.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        imagePanel.add(imagePreview, BorderLayout.SOUTH);
+
+        btn_sendImage = new JButton("Send Image");
+        btn_sendImage.setEnabled(false); // Initially disabled
+        btn_sendImage.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sendImage();
+            }
+        });
+        imagePanel.add(btn_sendImage, BorderLayout.NORTH);
+
+        add(imagePanelArea, BorderLayout.CENTER);
         imagePanelArea.add(imagePanel);
         imagePanelArea.add(spnl);
-
 
         try {
             String envFilePath = "client/.env";
@@ -118,6 +132,7 @@ public class DashBoard extends JFrame {
             in = new ObjectInputStream(socket.getInputStream());
             out.writeObject(userId);
             loadFriends();
+            new ImageReceiver().start(); // Start the image receiver thread
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -144,7 +159,6 @@ public class DashBoard extends JFrame {
                 }
             } else if (response instanceof String) {
                 System.out.println(response);
-
             } else {
                 JOptionPane.showMessageDialog(this, "Error loading friends: Invalid response type");
                 System.out.println("Invalid response type: " + response.getClass()); // Log the actual type
@@ -154,7 +168,6 @@ public class DashBoard extends JFrame {
             JOptionPane.showMessageDialog(this, "Error loading friends: " + e.getMessage());
         }
     }
-
 
     private void sendFriendRequest() {
         String friendUsername = JOptionPane.showInputDialog(this, "Enter friend's username:");
@@ -221,7 +234,7 @@ public class DashBoard extends JFrame {
                 Object response = in.readObject();
                 if (!"SUCCESS".equals(response)) {
                     JOptionPane.showMessageDialog(this, "Error updating friend request.");
-                }else{
+                } else {
                     loadFriends();
                 }
             } catch (IOException | ClassNotFoundException e) {
@@ -232,20 +245,52 @@ public class DashBoard extends JFrame {
 
     private void handleImageDrop(File file) {
         try {
-            byte[] imageBytes = Files.readAllBytes(file.toPath());
-            out.writeObject("SEND_IMAGE");
-            out.writeObject(friendList.getSelectedValuesList());
-            out.writeObject(imageBytes);
-            Object response = in.readObject();
-            if ("IMAGE_SENT".equals(response)) {
-                JOptionPane.showMessageDialog(this, "Image sent successfully.");
-            } else {
-                JOptionPane.showMessageDialog(this, "Error sending image.");
-            }
-        } catch (IOException | ClassNotFoundException e) {
+            // Load the image and display it
+            droppedImageBytes = Files.readAllBytes(file.toPath());
+            ImageIcon imageIcon = new ImageIcon(droppedImageBytes);
+            imagePreview.setIcon(imageIcon);
+            imagePreview.setText(null);
+            btn_sendImage.setEnabled(true); // Enable the send button
+        } catch (IOException e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading image.");
         }
     }
+
+    private void sendImage() {
+        try {
+            if (droppedImageBytes != null) {
+                // Send the image data
+                out.writeObject("SEND_IMAGE");
+
+                out.writeObject(friendList.getSelectedValuesList());
+
+                out.writeObject(droppedImageBytes);
+                out.flush(); // Ensure all data is sent
+
+                // Wait for the response
+                Object response = in.readObject();
+                System.out.println("Received response: " + response.getClass().getName());
+
+                if ("IMAGE_SENT".equals(response)) {
+                    JOptionPane.showMessageDialog(this, "Image sent successfully.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error sending image.");
+                }
+                droppedImageBytes = null; // Reset after sending
+                imagePreview.setIcon(null);
+                imagePreview.setText("No image selected");
+                btn_sendImage.setEnabled(false);
+            } else {
+                JOptionPane.showMessageDialog(this, "No image to send.");
+            }
+        } catch (IOException | ClassNotFoundException e) {
+
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error sending image: " + e.getMessage());
+        }
+    }
+
 
     private void logout() {
         try {
@@ -256,4 +301,35 @@ public class DashBoard extends JFrame {
         dispose();
         new LoginPage();
     }
+
+    private class ImageReceiver extends Thread {
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    Object response = in.readObject();
+                    if ("RECEIVE_IMAGE".equals(response)) {
+                        byte[] imageBytes = (byte[]) in.readObject();
+                        // Create a temporary file to store the received image
+                        File tempFile = File.createTempFile("received_image", ".jpg");
+                        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                            fos.write(imageBytes);
+                        }
+
+                        // Display the received image in a new JFrame
+                        JFrame imageFrame = new JFrame("Received Image");
+                        imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        imageFrame.setSize(600, 600);
+                        ImageIcon imageIcon = new ImageIcon(imageBytes);
+                        JLabel imageLabel = new JLabel(imageIcon);
+                        imageFrame.add(new JScrollPane(imageLabel));
+                        imageFrame.setVisible(true);
+                    }
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }
