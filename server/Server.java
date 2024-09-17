@@ -234,6 +234,7 @@ public class Server {
                 Object imageBytesObject = in.readObject();
 
                 if (recipientsObject instanceof List<?> && imageBytesObject instanceof byte[]) {
+                    @SuppressWarnings("unchecked")
                     List<String> recipients = (List<String>) recipientsObject;
                     byte[] imageBytes = (byte[]) imageBytesObject;
                     for (String recipient : recipients) {
