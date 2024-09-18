@@ -182,6 +182,8 @@ public class Server {
                     String senderUsername = rs.getString("username");
                     requests.add(requestId + " - " + senderUsername);
                 }
+                System.out.println(requests.getClass() );
+                System.out.println(requests);
                 out.writeObject(requests);
             } catch (SQLException e) {
                 e.printStackTrace();

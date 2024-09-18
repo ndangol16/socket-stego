@@ -139,6 +139,11 @@ public class DashBoard extends JFrame {
 
         setVisible(true);
     }
+    private void resetAfterSend() {
+        imagePreview.setIcon(null);
+        imagePreview.setText("No image selected");
+        btn_sendImage.setEnabled(false);
+    }
 
     private void loadFriends() {
         try {
@@ -176,6 +181,7 @@ public class DashBoard extends JFrame {
                 out.writeObject("SEND_FRIEND_REQUEST");
                 out.writeObject(friendUsername);
                 Object response = in.readObject();
+                System.out.println(response);
                 if ("SUCCESS".equals(response)) {
                     JOptionPane.showMessageDialog(this, "Friend request sent.");
                 } else if ("USER_NOT_FOUND".equals(response)) {
@@ -192,6 +198,7 @@ public class DashBoard extends JFrame {
     private void showPendingRequests() {
         try {
             out.writeObject("GET_PENDING_REQUESTS");
+            out.flush();
             Object response = in.readObject();
             System.out.println(response.getClass());
             if (response instanceof List<?>) {
@@ -274,6 +281,7 @@ public class DashBoard extends JFrame {
 
                 if ("IMAGE_SENT".equals(response)) {
                     JOptionPane.showMessageDialog(this, "Image sent successfully.");
+                    resetAfterSend();
                 } else {
                     JOptionPane.showMessageDialog(this, "Error sending image.");
                 }
