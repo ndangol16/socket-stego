@@ -47,9 +47,17 @@ public class StegoPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
 
+        JButton cancel = new JButton("Cancel");
+        cancel.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetStegoPanel();
+            }
+        });
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(embedButton);
         buttonPanel.add(extractButton);
+        buttonPanel.add(cancel);
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         add(panel, BorderLayout.EAST);
@@ -81,6 +89,7 @@ public class StegoPanel extends JPanel {
                     File file = fileList.get(0);
                     image = ImageIO.read(file);
                     imageLabel.setIcon(new ImageIcon(image));
+                    imageLabel.setText("");
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -97,38 +106,51 @@ public class StegoPanel extends JPanel {
                 dbConnection.saveSequence(uniqueImageId, prSequence); // Store sequence with unique ID
 
                 try {
-                    // Save the stego image with the unique image ID
-                    ImageIO.write(image, "png", new File(uniqueImageId + "_stego_image.png"));
+                    // Create a JFileChooser for saving the image
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setDialogTitle("Save Stego Image");
+                    fileChooser.setSelectedFile(new File(uniqueImageId + "_stego_image.png")); // Default filename
 
-                    // Create a JTextArea with the Image ID that is selectable
-                    JTextArea textArea = new JTextArea("Data embedded successfully!\nImage ID: " + uniqueImageId);
-                    textArea.setEditable(false); // Not editable
-                    textArea.setLineWrap(true);  // Enable line wrap
-                    textArea.setWrapStyleWord(true);
-                    textArea.setOpaque(false); // Makes it look like a JLabel
-                    textArea.setFont(UIManager.getFont("Label.font")); // Use the default label font
-                    textArea.setPreferredSize(new Dimension(300, 100)); // Increase width and height
+                    int userSelection = fileChooser.showSaveDialog(null);
+                    if (userSelection == JFileChooser.APPROVE_OPTION) {
+                        File fileToSave = fileChooser.getSelectedFile();
+                        // Save the stego image to the user-selected file
+                        ImageIO.write(image, "png", fileToSave);
 
-                    // Add the "Copy to Clipboard" button
-                    JButton copyButton = new JButton("Copy Image ID");
-                    copyButton.addActionListener(new ActionListener() {
-                        public void actionPerformed(ActionEvent evt) {
-                            StringSelection selection = new StringSelection(uniqueImageId);
-                            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                            clipboard.setContents(selection, selection);
-                        }
-                    });
+                        // Create a JTextArea with the Image ID that is selectable
+                        JTextArea textArea = new JTextArea("Data embedded successfully!\nImage ID: " + uniqueImageId);
+                        textArea.setEditable(false); // Not editable
+                        textArea.setLineWrap(true);  // Enable line wrap
+                        textArea.setWrapStyleWord(true);
+                        textArea.setOpaque(false); // Makes it look like a JLabel
+                        textArea.setFont(UIManager.getFont("Label.font")); // Use the default label font
+                        textArea.setPreferredSize(new Dimension(300, 100)); // Increase width and height
 
-                    // Create a panel to hold both the text area and the button
-                    JPanel panel = new JPanel(new BorderLayout());
-                    panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
-                    panel.add(copyButton, BorderLayout.SOUTH);
+                        // Add the "Copy to Clipboard" button
+                        JButton copyButton = new JButton("Copy Image ID");
+                        copyButton.addActionListener(new ActionListener() {
+                            public void actionPerformed(ActionEvent evt) {
+                                StringSelection selection = new StringSelection(uniqueImageId);
+                                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                                clipboard.setContents(selection, selection);
+                            }
+                        });
 
-                    // Show the panel in a JOptionPane
-                    JOptionPane.showMessageDialog(null,
-                            panel,
-                            "Embedding Complete",
-                            JOptionPane.INFORMATION_MESSAGE);
+                        // Create a panel to hold both the text area and the button
+                        JPanel panel = new JPanel(new BorderLayout());
+                        panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
+                        panel.add(copyButton, BorderLayout.SOUTH);
+
+                        // Show the panel in a JOptionPane
+                        JOptionPane.showMessageDialog(null,
+                                panel,
+                                "Embedding Complete",
+                                JOptionPane.INFORMATION_MESSAGE);
+
+                        // Reset the StegoPanel after successful embedding
+                        resetStegoPanel(); // Custom method to reset the panel
+
+                    }
 
                 } catch (IOException ex) {
                     ex.printStackTrace();
@@ -145,6 +167,8 @@ public class StegoPanel extends JPanel {
             }
         }
     }
+
+
 
 
 
@@ -178,17 +202,20 @@ public class StegoPanel extends JPanel {
                                     new JScrollPane(textArea),
                                     "Data Extraction Complete",
                                     JOptionPane.INFORMATION_MESSAGE);
+                            resetStegoPanel();
                         } else {
                             JOptionPane.showMessageDialog(null,
                                     "No data found in the image for the provided Image ID.",
                                     "No Data Found",
                                     JOptionPane.WARNING_MESSAGE);
+                            resetStegoPanel();
                         }
                     } else {
                         JOptionPane.showMessageDialog(null,
                                 "No pseudo-random sequence found for the provided Image ID.",
                                 "Error",
                                 JOptionPane.ERROR_MESSAGE);
+                        resetStegoPanel();
                     }
                 } else {
                     JOptionPane.showMessageDialog(null,
@@ -204,6 +231,18 @@ public class StegoPanel extends JPanel {
             }
         }
     }
+    private void resetStegoPanel() {
+        // Reset the image to null (or a default placeholder)
+        image = null;
+        imageLabel.setIcon(null); // Assuming imageLabel is the JLabel showing the image preview
+        imageLabel.setText("Drop image here...");
+        // Clear the text area
+        textArea.setText("Drop text here...");
+
+        // Optionally, reset other components if necessary
+        // For example, you could disable certain buttons or fields
+    }
+
 
 
     private void embedData(BufferedImage image, String data, int[] prSequence) {
