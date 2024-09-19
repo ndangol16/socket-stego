@@ -13,6 +13,7 @@ public class Server {
     private static final int PORT = 12345;
     private static DBConnection db;
     private static Map<Integer, ObjectOutputStream> activeClients = new HashMap<>(); // Map to hold connected clients' output streams
+    private static Map<Integer, ObjectOutputStream> activeImageClients = new HashMap<>();
 //    private static int userId;
 
     public static void main(String[] args) {
@@ -71,6 +72,11 @@ public class Server {
                     if (data.length == 2){
                         if (data[0].equals("UserId:")) {
                             userId = Integer.parseInt(data[1]);
+                        }
+                        if (data[0].equals("ImageUserId:")) {
+                            userId = Integer.parseInt(data[1]);
+                            activeImageClients.put(userId, out);
+                            return;
                         }
                     }
                 }
@@ -262,9 +268,9 @@ public class Server {
 
                     for (String recipient : recipients) {
                         int recipientId = db.getUserIdByUsername(recipient);
-                        if (recipientId != -1 && activeClients.containsKey(recipientId)) {
+                        if (recipientId != -1 && activeImageClients.containsKey(recipientId)) {
                             // Send the image to the recipient
-                            ObjectOutputStream recipientOut = activeClients.get(recipientId);
+                            ObjectOutputStream recipientOut = activeImageClients.get(recipientId);
                             recipientOut.writeObject("RECEIVE_IMAGE");
                             recipientOut.writeObject(imageBytes);
                             System.out.println("Image sent to " + recipient);

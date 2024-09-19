@@ -133,7 +133,7 @@ public class DashBoard extends JFrame {
             out.writeObject("UserId: " + userId);
             out.flush();
             loadFriends();
-            new ImageReceiver().start(); // Start the image receiver thread
+            new ImageReceiver(userId).start(); // Start the image receiver thread
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -316,13 +316,24 @@ public class DashBoard extends JFrame {
 }
 
 class ImageReceiver extends Thread {
+
+    private int userId;
+
+    public ImageReceiver(int userId) {
+        super();
+        this.userId = userId;
+    }
+
     @Override
     public void run() {
+        System.out.println("Image reciever thread");
         try {
             String envFilePath = "client/.env";
             Map<String, String> envVars = EnvLoader.loadEnv(envFilePath);
             Socket socket = new Socket(envVars.get("URL"), Integer.parseInt(envVars.get("PORT")));
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeObject("ImageUserId: " + userId);
             while (true) {
                 Object response = in.readObject();
                 if ("RECEIVE_IMAGE".equals(response)) {
