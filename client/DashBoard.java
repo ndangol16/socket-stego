@@ -271,7 +271,10 @@ public class DashBoard extends JFrame {
                 // Send the image data
                 out.writeObject("SEND_IMAGE");
 
+                out.flush();
+
                 out.writeObject(friendList.getSelectedValuesList());
+                out.flush();
 
                 out.writeObject(droppedImageBytes);
                 out.flush(); // Ensure all data is sent
