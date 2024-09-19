@@ -43,7 +43,6 @@ public class Server {
 
             try {
                 out = new ObjectOutputStream(socket.getOutputStream());
-                out.flush();
                 in = new ObjectInputStream(socket.getInputStream());
 
                 Object initialActionObject = in.readObject();
@@ -72,21 +71,23 @@ public class Server {
                     if (data.length == 2){
                         if (data[0].equals("UserId:")) {
                             userId = Integer.parseInt(data[1]);
+                            activeClients.put(userId, out);
+
+                            if (userId == -1) {
+                                throw new RuntimeException("Invalid user");
+                            }
+
                         }
                         if (data[0].equals("ImageUserId:")) {
                             userId = Integer.parseInt(data[1]);
                             activeImageClients.put(userId, out);
-                            return;
                         }
                     }
                 }
 
-                if (userId == -1) {
-                    throw new RuntimeException("Invalid user");
-                }
+
 
                 // Store the output stream for the logged-in user
-                activeClients.put(userId, out);
 
                 while (true) {
                     Object actionObject = in.readObject();
