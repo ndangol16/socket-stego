@@ -128,9 +128,10 @@ public class DashBoard extends JFrame {
             Map<String, String> envVars = EnvLoader.loadEnv(envFilePath);
             socket = new Socket(envVars.get("URL"), Integer.parseInt(envVars.get("PORT")));
             out = new ObjectOutputStream(socket.getOutputStream());
-            out.flush();
+//            out.flush();
             in = new ObjectInputStream(socket.getInputStream());
-            out.writeObject(userId);
+            out.writeObject("UserId: " + userId);
+            out.flush();
             loadFriends();
             new ImageReceiver().start(); // Start the image receiver thread
         } catch (IOException e) {
@@ -310,34 +311,40 @@ public class DashBoard extends JFrame {
         new LoginPage();
     }
 
-    private class ImageReceiver extends Thread {
-        @Override
-        public void run() {
-            try {
-                while (true) {
-                    Object response = in.readObject();
-                    if ("RECEIVE_IMAGE".equals(response)) {
-                        byte[] imageBytes = (byte[]) in.readObject();
-                        // Create a temporary file to store the received image
-                        File tempFile = File.createTempFile("received_image", ".jpg");
-                        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                            fos.write(imageBytes);
-                        }
 
-                        // Display the received image in a new JFrame
-                        JFrame imageFrame = new JFrame("Received Image");
-                        imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                        imageFrame.setSize(600, 600);
-                        ImageIcon imageIcon = new ImageIcon(imageBytes);
-                        JLabel imageLabel = new JLabel(imageIcon);
-                        imageFrame.add(new JScrollPane(imageLabel));
-                        imageFrame.setVisible(true);
+
+}
+
+class ImageReceiver extends Thread {
+    @Override
+    public void run() {
+        try {
+            String envFilePath = "client/.env";
+            Map<String, String> envVars = EnvLoader.loadEnv(envFilePath);
+            Socket socket = new Socket(envVars.get("URL"), Integer.parseInt(envVars.get("PORT")));
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+            while (true) {
+                Object response = in.readObject();
+                if ("RECEIVE_IMAGE".equals(response)) {
+                    byte[] imageBytes = (byte[]) in.readObject();
+                    // Create a temporary file to store the received image
+                    File tempFile = File.createTempFile("received_image", ".jpg");
+                    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                        fos.write(imageBytes);
                     }
+
+                    // Display the received image in a new JFrame
+                    JFrame imageFrame = new JFrame("Received Image");
+                    imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    imageFrame.setSize(600, 600);
+                    ImageIcon imageIcon = new ImageIcon(imageBytes);
+                    JLabel imageLabel = new JLabel(imageIcon);
+                    imageFrame.add(new JScrollPane(imageLabel));
+                    imageFrame.setVisible(true);
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
             }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
         }
     }
-
 }

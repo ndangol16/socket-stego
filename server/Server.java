@@ -13,7 +13,7 @@ public class Server {
     private static final int PORT = 12345;
     private static DBConnection db;
     private static Map<Integer, ObjectOutputStream> activeClients = new HashMap<>(); // Map to hold connected clients' output streams
-    private static int userId;
+//    private static int userId;
 
     public static void main(String[] args) {
         db = new DBConnection();
@@ -38,6 +38,8 @@ public class Server {
 
         @Override
         public void run() {
+            int userId = -1;
+
             try {
                 out = new ObjectOutputStream(socket.getOutputStream());
                 out.flush();
@@ -48,12 +50,33 @@ public class Server {
                     String initialAction = (String) initialActionObject;
                     if ("LOGIN".equals(initialAction)) {
                         handleLogin();
+                        return;
                     } else if ("REGISTER".equals(initialAction)) {
                         handleRegister();
-                    } else {
-                        out.writeObject("INVALID_ACTION");
                         return;
                     }
+//                    else {
+//                        out.writeObject("INVALID_ACTION");
+//                        return;
+//                    }
+                }
+
+
+                if (initialActionObject instanceof String) {
+
+                    String value = (String) initialActionObject;
+
+                    String[] data = value.split(" ");
+
+                    if (data.length == 2){
+                        if (data[0].equals("UserId:")) {
+                            userId = Integer.parseInt(data[1]);
+                        }
+                    }
+                }
+
+                if (userId == -1) {
+                    throw new RuntimeException("Invalid user");
                 }
 
                 // Store the output stream for the logged-in user
@@ -66,16 +89,16 @@ public class Server {
                         System.out.println("Received action: " + action);
                         switch (action) {
                             case "SEND_FRIEND_REQUEST":
-                                handleSendFriendRequest();
+                                handleSendFriendRequest(userId);
                                 break;
                             case "GET_PENDING_REQUESTS":
-                                handleGetPendingRequests();
+                                handleGetPendingRequests(userId);
                                 break;
                             case "UPDATE_FRIEND_REQUEST":
-                                handleUpdateFriendRequest();
+                                handleUpdateFriendRequest(userId);
                                 break;
                             case "GET_FRIENDS":
-                                handleGetFriends();
+                                handleGetFriends(userId);
                                 break;
                             case "SEND_IMAGE":
                                 handleSendImage();
@@ -111,7 +134,7 @@ public class Server {
             String username = (String) in.readObject();
             String password = (String) in.readObject();
             System.out.println("Received login credentials: username = " + username);
-            userId = db.authenticateUser(username, password);
+            int userId = db.authenticateUser(username, password);
 
             if (userId != -1) {
                 System.out.println("User authenticated: userId = " + userId);
@@ -142,7 +165,7 @@ public class Server {
             }
         }
 
-        private void handleSendFriendRequest() throws IOException, SQLException {
+        private void handleSendFriendRequest(int userId) throws IOException, SQLException {
             try {
                 System.out.println("Starting handleSendFriendRequest method.");
                 String friendUsername = (String) in.readObject();
@@ -172,7 +195,7 @@ public class Server {
             }
         }
 
-        private void handleGetPendingRequests() throws IOException, SQLException {
+        private void handleGetPendingRequests(int userId) throws IOException, SQLException {
             System.out.println("handleGetPendingRequests userid: " + userId);
             try {
                 ResultSet rs = db.getPendingRequests(userId);
@@ -185,6 +208,7 @@ public class Server {
                 System.out.println(requests.getClass() );
                 System.out.println(requests);
                 out.writeObject(requests);
+                out.flush();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -195,7 +219,7 @@ public class Server {
             return isUnique;
         }
 
-        private void handleUpdateFriendRequest() throws IOException, SQLException {
+        private void handleUpdateFriendRequest(int userId) throws IOException, SQLException {
             try {
                 Object requestIdObject = in.readObject();
                 Object statusObject = in.readObject();
@@ -218,10 +242,11 @@ public class Server {
             }
         }
 
-        private void handleGetFriends() throws IOException, SQLException {
+        private void handleGetFriends(int userId) throws IOException, SQLException {
             List<String> friends = db.getFriends(userId);
             System.out.println("Sending friends list: " + friends); // Log the friends list
             out.writeObject(friends);
+            out.flush();
         }
 
         private void handleSendImage() throws IOException {

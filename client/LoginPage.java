@@ -87,8 +87,12 @@ public class LoginPage extends JFrame implements ActionListener {
                         if (responseStr.startsWith("SUCCESS")) {
                             int userId = Integer.parseInt(responseStr.substring("SUCCESS".length()).trim());
                             JOptionPane.showMessageDialog(this, "Login Successful", "Successful", JOptionPane.INFORMATION_MESSAGE);
+                            out.close();
+                            in.close();
+                            socket.close();
                             new DashBoard(userId, username);
                             dispose();
+
                         } else {
                             JOptionPane.showMessageDialog(this, "Invalid Username or Password", "Unsuccessful", JOptionPane.ERROR_MESSAGE);
                         }
