@@ -335,27 +335,33 @@ class ImageReceiver extends Thread {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             out.writeObject("ImageUserId: " + userId);
             while (true) {
-                Object response = in.readObject();
-                if ("RECEIVE_IMAGE".equals(response)) {
-                    System.out.println("Recieving image");
-                    byte[] imageBytes = (byte[]) in.readObject();
-                    // Create a temporary file to store the received image
-                    File tempFile = File.createTempFile("received_image", ".png");
-                    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                        fos.write(imageBytes);
-                    }
+                try{
+                    Object response = in.readObject();
+                    if ("RECEIVE_IMAGE".equals(response)) {
+                        System.out.println("Recieving image");
+                        byte[] imageBytes = (byte[]) in.readObject();
+                        // Create a temporary file to store the received image
+                        File tempFile = File.createTempFile("received_image", ".png");
+                        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                            fos.write(imageBytes);
+                        }
 
-                    // Display the received image in a new JFrame
-                    JFrame imageFrame = new JFrame("Received Image");
-                    imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                    imageFrame.setSize(600, 600);
-                    ImageIcon imageIcon = new ImageIcon(imageBytes);
-                    JLabel imageLabel = new JLabel(imageIcon);
-                    imageFrame.add(new JScrollPane(imageLabel));
-                    imageFrame.setVisible(true);
+                        // Display the received image in a new JFrame
+                        JFrame imageFrame = new JFrame("Received Image");
+                        imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        imageFrame.setSize(600, 600);
+                        ImageIcon imageIcon = new ImageIcon(imageBytes);
+                        JLabel imageLabel = new JLabel(imageIcon);
+                        imageFrame.add(new JScrollPane(imageLabel));
+                        imageFrame.setVisible(true);
+                    }
+                }catch(IOException | ClassNotFoundException ex){
+                        ex.printStackTrace();
+                    }
                 }
-            }
-        } catch (IOException | ClassNotFoundException e) {
+
+
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
