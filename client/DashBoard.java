@@ -286,7 +286,20 @@ public class DashBoard extends JFrame {
                 if ("IMAGE_SENT".equals(response)) {
                     JOptionPane.showMessageDialog(this, "Image sent successfully.");
                     resetAfterSend();
-                } else {
+                } else if ("EMPTY_RECEIVER_LIST".equals(response)) {
+                    JOptionPane.showMessageDialog(this, "Please select user to send image to.");
+                    resetAfterSend();
+                }
+                else if ("UNREACHABLE_USER".equals(response)) {
+                    JOptionPane.showMessageDialog(this, "Selected user is not ready to receive. Make sure recipient is online!");
+                    resetAfterSend();
+                }
+//                else if ("INVALID_IMAGE_DATA".equals(response)) {
+//                    JOptionPane.showMessageDialog(this, "Failed to send image. Please check and resend!");
+//                    resetAfterSend();
+//
+//                }
+                else {
                     JOptionPane.showMessageDialog(this, "Error sending image.");
                 }
                 droppedImageBytes = null; // Reset after sending

@@ -267,21 +267,28 @@ public class Server {
                     List<String> recipients = (List<String>) recipientsObject;
                     byte[] imageBytes = (byte[]) imageBytesObject;
 
-                    for (String recipient : recipients) {
-                        int recipientId = db.getUserIdByUsername(recipient);
-                        if (recipientId != -1 && activeImageClients.containsKey(recipientId)) {
-                            // Send the image to the recipient
-                            ObjectOutputStream recipientOut = activeImageClients.get(recipientId);
-                            recipientOut.writeObject("RECEIVE_IMAGE");
-                            recipientOut.writeObject(imageBytes);
-                            System.out.println("Image sent to " + recipient);
-                        } else {
+                    System.out.println(recipients);
+                    if (!recipients.isEmpty()){
+                        for (String recipient : recipients) {
+                            int recipientId = db.getUserIdByUsername(recipient);
+                            if (recipientId != -1 && activeImageClients.containsKey(recipientId)) {
+                                // Send the image to the recipient
+                                ObjectOutputStream recipientOut = activeImageClients.get(recipientId);
+                                recipientOut.writeObject("RECEIVE_IMAGE");
+                                recipientOut.writeObject(imageBytes);
+                                System.out.println("Image sent to " + recipient);
+                            } else {
 //                            ObjectOutputStream recipientOut = activeClients.get(recipientId);
 //                            recipientOut.writeObject("RECEIVE_IMAGE_ERROR");
-                            System.out.println("Recipient " + recipient + " is offline or not found.");
+                                out.writeObject("UNREACHABLE_USER");
+                                System.out.println("Recipient " + recipient + " is offline or not found.");
+                            }
                         }
+                        out.writeObject("IMAGE_SENT");
+                    }else {
+                        out.writeObject("EMPTY_RECEIVER_LIST");
                     }
-                    out.writeObject("IMAGE_SENT");
+
                 } else {
                     out.writeObject("INVALID_IMAGE_DATA");
                 }
