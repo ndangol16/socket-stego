@@ -336,7 +336,9 @@ class ImageReceiver extends Thread {
             out.writeObject("ImageUserId: " + userId);
             while (true) {
                 try{
-                    Object response = in.readObject();
+                    Object response = in.read();
+                    System.out.println(response.getClass().getName());
+                    System.out.println(response);
                     if ("RECEIVE_IMAGE".equals(response)) {
                         System.out.println("Recieving image");
                         byte[] imageBytes = (byte[]) in.readObject();
