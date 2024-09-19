@@ -368,10 +368,50 @@ class ImageReceiver extends Thread {
                     JFrame imageFrame = new JFrame("Received Image");
                     imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                     imageFrame.setSize(600, 600);
+
+// Create an ImageIcon to display the image
                     ImageIcon imageIcon = new ImageIcon(imageBytes);
                     JLabel imageLabel = new JLabel(imageIcon);
-                    imageFrame.add(new JScrollPane(imageLabel));
+                    imageFrame.add(new JScrollPane(imageLabel), BorderLayout.CENTER);
+
+// Create a panel for the Save button
+                    JPanel buttonPanel = new JPanel();
+                    JButton btnSave = new JButton("Save Image");
+
+// Add action listener to the Save button
+                    btnSave.addActionListener(e -> {
+                        // Create a JFileChooser for saving the image
+                        JFileChooser fileChooser = new JFileChooser();
+                        fileChooser.setDialogTitle("Save Image");
+                        fileChooser.setSelectedFile(new File("received_image.png")); // Default filename
+
+                        int userSelection = fileChooser.showSaveDialog(imageFrame);
+                        if (userSelection == JFileChooser.APPROVE_OPTION) {
+                            File fileToSave = fileChooser.getSelectedFile();
+                            try (FileOutputStream fos = new FileOutputStream(fileToSave)) {
+                                fos.write(imageBytes); // Save the image bytes to the selected file
+                                JOptionPane.showMessageDialog(imageFrame, "Image saved successfully!");
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                                JOptionPane.showMessageDialog(imageFrame, "Error saving the image: " + ex.getMessage());
+                            }
+                        }
+                    });
+
+// Add the Save button to the button panel
+                    buttonPanel.add(btnSave);
+                    imageFrame.add(buttonPanel, BorderLayout.SOUTH);
+
                     imageFrame.setVisible(true);
+
+//                    // Display the received image in a new JFrame
+//                    JFrame imageFrame = new JFrame("Received Image");
+//                    imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//                    imageFrame.setSize(600, 600);
+//                    ImageIcon imageIcon = new ImageIcon(imageBytes);
+//                    JLabel imageLabel = new JLabel(imageIcon);
+//                    imageFrame.add(new JScrollPane(imageLabel));
+//                    imageFrame.setVisible(true);
                 }
 
             }
