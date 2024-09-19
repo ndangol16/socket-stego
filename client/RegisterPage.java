@@ -12,7 +12,7 @@ public class RegisterPage extends JFrame implements ActionListener {
     private JLabel lbl_title, lbl_username, lbl_password;
     private JTextField txt_username;
     private JPasswordField txt_password;
-    private JButton btn_register;
+    private JButton btn_register, btn_back;
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -46,8 +46,18 @@ public class RegisterPage extends JFrame implements ActionListener {
 
         btn_register = new JButton("Register");
         btn_register.setBounds(150, 180, 100, 30);
+        btn_back = new JButton("Back");
+        btn_back.setBounds(150, 220, 100, 30);
+        btn_back.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+                new LoginPage();
+            }
+        });
         btn_register.addActionListener(this);
         add(btn_register);
+        add(btn_back);
 
         setVisible(true);
     }

@@ -326,9 +326,10 @@ class ImageReceiver extends Thread {
             while (true) {
                 Object response = in.readObject();
                 if ("RECEIVE_IMAGE".equals(response)) {
+                    System.out.println("Recieving image");
                     byte[] imageBytes = (byte[]) in.readObject();
                     // Create a temporary file to store the received image
-                    File tempFile = File.createTempFile("received_image", ".jpg");
+                    File tempFile = File.createTempFile("received_image", ".png");
                     try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                         fos.write(imageBytes);
                     }

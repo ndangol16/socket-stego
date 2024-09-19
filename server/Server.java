@@ -269,6 +269,8 @@ public class Server {
                             recipientOut.writeObject(imageBytes);
                             System.out.println("Image sent to " + recipient);
                         } else {
+//                            ObjectOutputStream recipientOut = activeClients.get(recipientId);
+//                            recipientOut.writeObject("RECEIVE_IMAGE_ERROR");
                             System.out.println("Recipient " + recipient + " is offline or not found.");
                         }
                     }
