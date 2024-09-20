@@ -190,7 +190,7 @@ public class StegoPanel extends JPanel {
 
                         if (extractedText != null && !extractedText.isEmpty()) {
                             JTextArea textArea = new JTextArea("Extracted Text:\n" + extractedText);
-                            textArea.setEditable(false);
+                            textArea.setEditable(true);
                             textArea.setLineWrap(true);
                             textArea.setWrapStyleWord(true);
                             textArea.setFont(UIManager.getFont("Label.font"));
@@ -340,7 +340,7 @@ class DBConnection {
     private Connection con;
 
     public DBConnection() {
-        try {String envFilePath = "server/.env";
+        try {String envFilePath = "steganography/.env";
             Map<String, String> envVars = EnvLoad.loadEnv(envFilePath);
             Class.forName("com.mysql.cj.jdbc.Driver");
             con = DriverManager.getConnection(envVars.get("DB_URL"), envVars.get("DB_USER"), envVars.get("DB_PASSWORD"));
